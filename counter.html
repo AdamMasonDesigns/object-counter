@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Object Counter</title>
+  <style>
+    body { text-align: center; font-family: Arial; }
+    video { width: 90%; max-width: 600px; }
+    #count { font-size: 1.5em; margin-top: 10px; }
+    canvas { position: absolute; top: 0; left: 0; }
+  </style>
+</head>
+<body>
+  <h1>Live Object Counter</h1>
+  <video id="webcam" autoplay playsinline></video>
+  <div id="count">Loading model...</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+  <script>
+    const video = document.getElementById('webcam');
+    const countDisplay = document.getElementById('count');
+    let model;
+
+    // Start camera
+    async function initCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' } // back camera
+      });
+      video.srcObject = stream;
+      return new Promise(resolve => {
+        video.onloadedmetadata = () => resolve(video);
+      });
+    }
+
+    // Load model & start detection loop
+    async function init() {
+      await initCamera();
+      model = await cocoSsd.load();
+      countDisplay.textContent = 'Model loaded. Counting...';
+      detectFrame();
+    }
+
+    async function detectFrame() {
+      const predictions = await model.detect(video);
+      countDisplay.textContent = `Objects detected: ${predictions.length}`;
+      requestAnimationFrame(detectFrame);
+    }
+
+    init();
+  </script>
+</body>
+</html>
